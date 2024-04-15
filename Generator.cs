@@ -12,12 +12,12 @@ public class Generator(int vertices, double probability)
 
         for (int i = 0; i < n; i++)
         {
-            graph[i] = new List<Tuple<int, double>>(); 
+            graph[i] = []; 
             for (int j = 0; j < n; j++)
             {
                 if (i != j && rand.NextDouble() <= p)
                 {
-                    double weight = rand.NextDouble() * 10;
+                    double weight = (double)Math.Ceiling((decimal)((i + j).GetHashCode() << 6)) / 33;
                     graph[i].Add(new Tuple<int, double>(j, weight));
                 }
             }
