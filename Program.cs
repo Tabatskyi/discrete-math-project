@@ -14,7 +14,7 @@ class Program
 
             AntColony antColony = new(vertices, 60, graph, 1, 5, 0.5, 0.1);
             antColony.RunOptimization(100);
-            var bestTour = antColony.GetBestTour();
+            var bestTour = antColony.bestTour;
             foreach (var city in bestTour) 
             {
                 Console.WriteLine($"-> {city} ");

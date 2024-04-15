@@ -3,27 +3,27 @@
 
 public class AntColony
 {
-    private Random rand = new();
-    private int numberOfCities;
-    private int numberOfAnts;
-    private Dictionary<int, List<Tuple<int, double>>> distances;
-    private Dictionary<int, List<Tuple<int, double>>> pheromones;
-    private double pheromonesMultiplier;
-    private double distanceMultiplier;
-    private double evaporationRate;
-    private double initialPheromone;
+    private readonly Random rand = new();
+    private readonly int numberOfVerts;
+    private readonly int numberOfAnts;
+    private readonly Dictionary<int, List<Tuple<int, double>>> distances;
+    private readonly Dictionary<int, List<Tuple<int, double>>> pheromones;
+    private readonly double pherMultiplier;
+    private readonly double distMultiplier;
+    private readonly double evaporationRate;
+    private readonly double initialPheromone;
     private double bestTourLength = double.MaxValue;
-    private int[] bestTour;
+    public int[] bestTour;
 
     public AntColony(int cities, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double initialPher)
     {
-        numberOfCities = cities;
+        numberOfVerts = cities;
         numberOfAnts = ants;
         distances = dists;
         pheromones = [];
 
-        pheromonesMultiplier = alpha;
-        distanceMultiplier = beta;
+        pherMultiplier = alpha;
+        distMultiplier = beta;
         evaporationRate = evaporation;
         initialPheromone = initialPher;
 
@@ -32,59 +32,57 @@ public class AntColony
         InitializePheromones();
     }
 
-    public int[] GetBestTour() => bestTour;
-
     private void InitializePheromones()
     {
-        foreach (var city in distances.Keys)
+        foreach (var vert in distances.Keys)
         {
-            pheromones[city] = distances[city].Select(edge => new Tuple<int, double>(edge.Item1, initialPheromone)).ToList();
+            pheromones[vert] = distances[vert].Select(edge => new Tuple<int, double>(edge.Item1, initialPheromone)).ToList();
         }
     }
 
     private int[] GenerateSolution()
     {
         List<int> tour = [];
-        int startCity = rand.Next(numberOfCities);
-        tour.Add(startCity);
-        HashSet<int> visited = [startCity];
+        int startVert = rand.Next(numberOfVerts);
+        tour.Add(startVert);
+        HashSet<int> visited = [startVert];
 
-        int currentCity = startCity;
-        while (tour.Count < numberOfCities)
+        int currentVert = startVert;
+        while (tour.Count < numberOfVerts)
         {
-            int nextCity = ChooseNextCity(currentCity, visited);
+            int nextCity = ChooseNextVert(currentVert, visited);
             if (nextCity == -1) 
                 break;
             tour.Add(nextCity);
             visited.Add(nextCity);
-            currentCity = nextCity;
+            currentVert = nextCity;
         }
 
-        if (tour.Count == numberOfCities && distances[currentCity].Any(d => d.Item1 == startCity))
-            tour.Add(startCity);
+        /*if (tour.Count == numberOfVerts && distances[currentVert].Any(d => d.Item1 == startVert))
+            tour.Add(startVert);*/
 
         return [.. tour];
     }
 
-    private int ChooseNextCity(int currentCity, HashSet<int> visited)
+    private int ChooseNextVert(int currentVert, HashSet<int> visited)
     {
-        if (!pheromones.TryGetValue(currentCity, out List<Tuple<int, double>>? value) || value == null)
+        if (!pheromones.TryGetValue(currentVert, out List<Tuple<int, double>>? value) || value == null)
             return -1;
 
-        var accessibleCities = value.Where(x => !visited.Contains(x.Item1) && x != null).ToList();
+        var accessibleVerts = value.Where(x => !visited.Contains(x.Item1) && x != null).ToList();
 
-        if (accessibleCities.Count == 0)
+        if (accessibleVerts.Count == 0)
             return -1;
 
         double sum = 0;
-        foreach (var city in accessibleCities)
+        foreach (var vert in accessibleVerts)
         {
-            var distanceEntry = distances[currentCity].FirstOrDefault(d => d.Item1 == city.Item1);
+            var distanceEntry = distances[currentVert].First(d => d.Item1 == vert.Item1);
             if (distanceEntry != null && distanceEntry.Item2 > 0)
             {
-                double pheromone = city.Item2;
+                double pheromone = vert.Item2;
                 double distance = distanceEntry.Item2;
-                sum += Math.Pow(pheromone, pheromonesMultiplier) * Math.Pow(1.0 / distance, distanceMultiplier);
+                sum += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
             }
         }
 
@@ -94,16 +92,16 @@ public class AntColony
         double randomPoint = rand.NextDouble() * sum;
         double cumulativeProbability = 0;
 
-        foreach (var city in accessibleCities)
+        foreach (var vert in accessibleVerts)
         {
-            var distanceEntry = distances[currentCity].FirstOrDefault(d => d.Item1 == city.Item1);
+            var distanceEntry = distances[currentVert].First(d => d.Item1 == vert.Item1);
             if (distanceEntry != null && distanceEntry.Item2 > 0) 
             {
-                double pheromone = city.Item2;
+                double pheromone = vert.Item2;
                 double distance = distanceEntry.Item2;
-                cumulativeProbability += Math.Pow(pheromone, pheromonesMultiplier) * Math.Pow(1.0 / distance, distanceMultiplier);
+                cumulativeProbability += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
                 if (cumulativeProbability >= randomPoint)
-                    return city.Item1;
+                    return vert.Item1;
             }
         }
 
@@ -113,12 +111,12 @@ public class AntColony
 
     private void EvaporatePheromones()
     {
-        foreach (var city in pheromones.Keys)
+        foreach (var vert in pheromones.Keys)
         {
-            for (int i = 0; i < pheromones[city].Count; i++)
+            for (int i = 0; i < pheromones[vert].Count; i++)
             {
-                var edge = pheromones[city][i];
-                pheromones[city][i] = new Tuple<int, double>(edge.Item1, edge.Item2 * (1 - evaporationRate));
+                var edge = pheromones[vert][i];
+                pheromones[vert][i] = new Tuple<int, double>(edge.Item1, edge.Item2 * (1 - evaporationRate));
             }
         }
     }
@@ -193,30 +191,30 @@ public class AntColony
 
             if (distances.TryGetValue(vert1, out List<Tuple<int, double>>? value) && value != null)
             {
-                var edge = value.FirstOrDefault(e => e.Item1 == vert2);
+                var edge = value.First(e => e.Item1 == vert2);
                 if (!edge.Equals(default(Tuple<int, double>)))
                 {
                     length += edge.Item2;
                 }
                 else
-                    throw new InvalidOperationException($"No direct link between city {vert1} and city {vert2}.");
+                    throw new InvalidOperationException($"No direct link between vertice {vert1} and vertice {vert2}.");
                 
             }
             else
-                throw new InvalidOperationException($"No entries found for city {vert1} in distances.");
+                throw new InvalidOperationException($"No entries found for vertice {vert1} in distances.");
             
         }
 
         if (tour.Length > 1 && distances.ContainsKey(tour.Last()) && distances[tour.Last()].Any(d => d.Item1 == tour[0]))
         {
-            var returnEdge = distances[tour.Last()].FirstOrDefault(e => e.Item1 == tour[0]);
+            var returnEdge = distances[tour.Last()].First(e => e.Item1 == tour[0]);
             if (!returnEdge.Equals(default(Tuple<int, double>)))
             {
                 length += returnEdge.Item2;
             }
             else
             {
-                throw new InvalidOperationException($"No return link from city {tour.Last()} to city {tour[0]}.");
+                throw new InvalidOperationException($"No return link from vertice {tour.Last()} to vertice {tour[0]}.");
             }
         }
 
