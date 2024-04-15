@@ -2,8 +2,10 @@
 
 public class AntColony
 {
-    private readonly Dictionary<int, List<Tuple<int, double>>> distances;
-    private readonly Dictionary<int, List<Tuple<int, double>>> pheromones;
+    private readonly Dictionary<int, List<Tuple<int, double>>>? listDistances;
+    private readonly Dictionary<int, List<Tuple<int, double>>>? listPheromones;
+    private readonly double[,]? matrixDistances;
+    private readonly double[,]? matrixPheromones;
 
     private readonly Random rand = new();
 
@@ -13,6 +15,7 @@ public class AntColony
     private readonly double pherMultiplier;
     private readonly double distMultiplier;
     private readonly double evaporationRate;
+    private readonly bool matrix;
     private readonly double initialPheromone;
     private double bestTourLength = double.PositiveInfinity;
 
@@ -20,16 +23,37 @@ public class AntColony
 
     public AntColony(int verts, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double initialPher)
     {
+        matrix = false;
         numberOfVerts = verts;
         numberOfAnts = ants;
-        distances = dists;
+        
+        listDistances = dists;
 
         pherMultiplier = alpha;
         distMultiplier = beta;
         evaporationRate = evaporation;
         initialPheromone = initialPher;
 
-        pheromones = [];
+        listPheromones = [];
+        bestTour = [];
+
+        InitializePheromones();
+    }
+
+    public AntColony(int verts, int ants, double[,] dists, double alpha, double beta, double evaporation, double initialPher)
+    {
+        matrix = true;
+        numberOfVerts = verts;
+        numberOfAnts = ants;
+
+        matrixDistances = dists;
+
+        pherMultiplier = alpha;
+        distMultiplier = beta;
+        evaporationRate = evaporation;
+        initialPheromone = initialPher;
+
+        matrixPheromones = new double[numberOfVerts, numberOfVerts];
         bestTour = [];
 
         InitializePheromones();
@@ -38,8 +62,13 @@ public class AntColony
 
     private void InitializePheromones()
     {
-        foreach (var vert in distances.Keys)
-            pheromones[vert] = distances[vert].Select(edge => new Tuple<int, double>(edge.Item1, initialPheromone)).ToList();
+        if (matrix)
+            for (int i = 0; i < numberOfVerts; i++)
+                for (int j = 0; j < numberOfVerts; j++)
+                    matrixPheromones[i, j] = initialPheromone;
+        else
+            foreach (var vert in listDistances.Keys)
+                listPheromones[vert] = listDistances[vert].Select(edge => new Tuple<int, double>(edge.Item1, initialPheromone)).ToList();
     }
 
 
@@ -54,8 +83,7 @@ public class AntColony
         while (tour.Count < numberOfVerts)
         {
             int nextVert = ChooseNextVert(currentVert, visited);
-
-            if (nextVert == -1) 
+            if (nextVert == -1)
                 break;
 
             tour.Add(nextVert);
@@ -63,16 +91,57 @@ public class AntColony
             currentVert = nextVert;
         }
 
-        /*if (tour.Count == numberOfVerts && distances[currentVert].Any(d => d.Item1 == startVert))
-            tour.Add(startVert);*/
-
         return [.. tour];
     }
 
 
     private int ChooseNextVert(int currentVert, HashSet<int> visited)
     {
-        if (!pheromones.TryGetValue(currentVert, out List<Tuple<int, double>>? value) || value == null)
+        if (matrix)
+            return ChooseNextVertMatrix(currentVert, visited);
+        else
+            return ChooseNextVertList(currentVert, visited);
+    }
+
+
+    private int ChooseNextVertMatrix(int currentVert, HashSet<int> visited)
+    {
+        List<int> accessibleVerts = [];
+        double sum = 0;
+
+        for (int i = 0; i < numberOfVerts; i++)
+        {
+            if (!visited.Contains(i) && matrixDistances[currentVert, i] > 0)
+            {
+                double pheromone = matrixPheromones[currentVert, i];
+                double distance = matrixDistances[currentVert, i];
+                sum += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
+                accessibleVerts.Add(i);
+            }
+        }
+
+        if (sum <= 0)
+            return -1;
+
+        double randomPoint = rand.NextDouble() * sum;
+        double cumulativeProbability = 0;
+
+        foreach (int vert in accessibleVerts)
+        {
+            double pheromone = matrixPheromones[currentVert, vert];
+            double distance = matrixDistances[currentVert, vert];
+            cumulativeProbability += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
+            if (cumulativeProbability >= randomPoint)
+                return vert;
+        }
+
+        return -1;
+    }
+
+
+    private int ChooseNextVertList(int currentVert, HashSet<int> visited)
+    {
+        if (!listPheromones.TryGetValue(currentVert, out List<Tuple<int, double>>? value) || value == null)
             return -1;
 
         var accessibleVerts = value.Where(x => !visited.Contains(x.Item1) && x != null).ToList();
@@ -83,7 +152,8 @@ public class AntColony
         double sum = 0;
         foreach (var vert in accessibleVerts)
         {
-            var distanceEntry = distances[currentVert].First(d => d.Item1 == vert.Item1);
+            var distanceEntry = listDistances[currentVert].First(d => d.Item1 == vert.Item1);
+
             if (distanceEntry != null && distanceEntry.Item2 > 0)
             {
                 double pheromone = vert.Item2;
@@ -100,7 +170,7 @@ public class AntColony
 
         foreach (var vert in accessibleVerts)
         {
-            var distanceEntry = distances[currentVert].First(d => d.Item1 == vert.Item1);
+            var distanceEntry = listDistances[currentVert].First(d => d.Item1 == vert.Item1);
             if (distanceEntry != null && distanceEntry.Item2 > 0) 
             {
                 double pheromone = vert.Item2;
@@ -117,20 +187,26 @@ public class AntColony
 
     private void EvaporatePheromones()
     {
-        foreach (var vert in pheromones.Keys)
-        {
-            for (int i = 0; i < pheromones[vert].Count; i++)
-            {
-                var edge = pheromones[vert][i];
-                pheromones[vert][i] = new Tuple<int, double>(edge.Item1, edge.Item2 * (1 - evaporationRate));
-            }
-        }
+        if (matrix)
+            for (int i = 0; i < numberOfVerts; i++)
+                for (int j = 0; i < numberOfVerts; j++)
+                    matrixPheromones[i, j] *= 1 - evaporationRate;
+        
+        else
+            foreach (var vert in listPheromones.Keys)
+                for (int i = 0; i < listPheromones[vert].Count; i++)
+                {
+                    var edge = listPheromones[vert][i];
+                    listPheromones[vert][i] = new Tuple<int, double>(edge.Item1, edge.Item2 * (1 - evaporationRate));
+                }
+        
     }
+
 
 
     public void RunOptimization(int iterations)
     {
-        for (int iter = 0; iter < iterations; iter++)
+        for (int i = 0; i < iterations; i++)
         {
             List<int[]> solutions = [];
 
@@ -153,43 +229,46 @@ public class AntColony
                 double tourLength = CalculateTourLength(solution);
                 double depositAmount = 1000.0 / tourLength;
 
-                for (int i = 0; i < solution.Length - 1; i++)
-                    UpdatePheromones(solution[i], solution[i + 1], depositAmount);            
+                for (int j = 0; j < solution.Length - 1; j++)
+                    UpdatePheromones(solution[j], solution[j + 1], depositAmount);            
             }
         }
     }
-    
+
 
     private void UpdatePheromones(int vert1, int vert2, double depositAmount)
     {
+        if (matrix)
+        {
+            matrixPheromones[vert1, vert2] += depositAmount;
+            matrixPheromones[vert2, vert1] += depositAmount; 
+        }
+        else
+        {
+            UpdatePheromonesList(listPheromones, vert1, vert2, depositAmount);
+            UpdatePheromonesList(listPheromones, vert2, vert1, depositAmount); 
+        }
+    }
+
+    private void UpdatePheromonesList(Dictionary<int, List<Tuple<int, double>>> pheromones, int vert1, int vert2, double depositAmount)
+    {
         var edgeIndex = pheromones[vert1].FindIndex(x => x.Item1 == vert2);
 
-        if (edgeIndex != -1) 
+        if (edgeIndex != -1)
         {
             var edge = pheromones[vert1][edgeIndex];
             pheromones[vert1][edgeIndex] = new Tuple<int, double>(edge.Item1, edge.Item2 + depositAmount);
         }
         else
             pheromones[vert1].Add(new Tuple<int, double>(vert2, depositAmount));
-        
-
-        edgeIndex = pheromones[vert2].FindIndex(x => x.Item1 == vert1);
-
-        if (edgeIndex != -1)
-        {
-            var edge = pheromones[vert2][edgeIndex];
-            pheromones[vert2][edgeIndex] = new Tuple<int, double>(edge.Item1, edge.Item2 + depositAmount);
-        }
-        else
-            pheromones[vert2].Add(new Tuple<int, double>(vert1, depositAmount));
-        
     }
+
 
 
     private double CalculateTourLength(int[] tour)
     {
         if (tour == null || tour.Length < 2)
-            throw new ArgumentException("Tour is null or too short to calculate length.");
+            throw new Exception("Tour is null or too short to calculate length.");
 
         double length = 0;
 
@@ -198,31 +277,22 @@ public class AntColony
             int vert1 = tour[i];
             int vert2 = tour[i + 1];
 
-            if (distances.TryGetValue(vert1, out List<Tuple<int, double>>? value) && value != null)
+            if (matrix)
             {
-                var edge = value.First(e => e.Item1 == vert2);
-                if (!edge.Equals(default(Tuple<int, double>)))
+                length += matrixDistances[vert1, vert2];
+            }
+            else
+            {
+                if (listDistances.TryGetValue(vert1, out List<Tuple<int, double>>? value) && value != null)
                 {
-                    length += edge.Item2;
+                    var edge = value.FirstOrDefault(e => e.Item1 == vert2);
+                    if (!edge.Equals(default(Tuple<int, double>)))
+                        length += edge.Item2;
+                    else
+                        throw new Exception($"No direct link between vertice {vert1} and vertice {vert2}.");
                 }
                 else
-                    throw new InvalidOperationException($"No direct link between vertice {vert1} and vertice {vert2}.");
-                
-            }
-            else
-                throw new InvalidOperationException($"No entries found for vertice {vert1} in distances.");
-        }
-
-        if (tour.Length > 1 && distances.ContainsKey(tour.Last()) && distances[tour.Last()].Any(d => d.Item1 == tour[0]))
-        {
-            var returnEdge = distances[tour.Last()].First(e => e.Item1 == tour[0]);
-            if (!returnEdge.Equals(default(Tuple<int, double>)))
-            {
-                length += returnEdge.Item2;
-            }
-            else
-            {
-                throw new InvalidOperationException($"No return link from vertice {tour.Last()} to vertice {tour[0]}.");
+                    throw new Exception($"No entries found for vertice {vert1} in distances.");
             }
         }
 
