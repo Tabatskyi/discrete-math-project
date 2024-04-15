@@ -2,7 +2,7 @@
 
 public class Utility
 {
-    public static void PrintGraph(Dictionary<int, List<Tuple<int, double>>> graph)
+    public static void PrintListGraph(Dictionary<int, List<Tuple<int, double>>> graph)
     {
         Console.WriteLine("Graph Adjacency List:");
         foreach (var vertex in graph.Keys)
