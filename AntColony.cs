@@ -1,44 +1,47 @@
 ﻿namespace DiscreteMathProject;
 
-
 public class AntColony
 {
-    private readonly Random rand = new();
-    private readonly int numberOfVerts;
-    private readonly int numberOfAnts;
     private readonly Dictionary<int, List<Tuple<int, double>>> distances;
     private readonly Dictionary<int, List<Tuple<int, double>>> pheromones;
+
+    private readonly Random rand = new();
+
+    private readonly int numberOfVerts;
+    private readonly int numberOfAnts;
+
     private readonly double pherMultiplier;
     private readonly double distMultiplier;
     private readonly double evaporationRate;
     private readonly double initialPheromone;
-    private double bestTourLength = double.MaxValue;
+    private double bestTourLength = double.PositiveInfinity;
+
     public int[] bestTour;
 
-    public AntColony(int cities, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double initialPher)
+    public AntColony(int verts, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double initialPher)
     {
-        numberOfVerts = cities;
+        numberOfVerts = verts;
         numberOfAnts = ants;
         distances = dists;
-        pheromones = [];
 
         pherMultiplier = alpha;
         distMultiplier = beta;
         evaporationRate = evaporation;
         initialPheromone = initialPher;
 
+        pheromones = [];
         bestTour = [];
 
         InitializePheromones();
     }
 
+
     private void InitializePheromones()
     {
         foreach (var vert in distances.Keys)
-        {
             pheromones[vert] = distances[vert].Select(edge => new Tuple<int, double>(edge.Item1, initialPheromone)).ToList();
-        }
     }
+
 
     private int[] GenerateSolution()
     {
@@ -46,16 +49,18 @@ public class AntColony
         int startVert = rand.Next(numberOfVerts);
         tour.Add(startVert);
         HashSet<int> visited = [startVert];
-
         int currentVert = startVert;
+
         while (tour.Count < numberOfVerts)
         {
-            int nextCity = ChooseNextVert(currentVert, visited);
-            if (nextCity == -1) 
+            int nextVert = ChooseNextVert(currentVert, visited);
+
+            if (nextVert == -1) 
                 break;
-            tour.Add(nextCity);
-            visited.Add(nextCity);
-            currentVert = nextCity;
+
+            tour.Add(nextVert);
+            visited.Add(nextVert);
+            currentVert = nextVert;
         }
 
         /*if (tour.Count == numberOfVerts && distances[currentVert].Any(d => d.Item1 == startVert))
@@ -63,6 +68,7 @@ public class AntColony
 
         return [.. tour];
     }
+
 
     private int ChooseNextVert(int currentVert, HashSet<int> visited)
     {
@@ -121,6 +127,7 @@ public class AntColony
         }
     }
 
+
     public void RunOptimization(int iterations)
     {
         for (int iter = 0; iter < iterations; iter++)
@@ -145,10 +152,9 @@ public class AntColony
             {
                 double tourLength = CalculateTourLength(solution);
                 double depositAmount = 1000.0 / tourLength;
+
                 for (int i = 0; i < solution.Length - 1; i++)
-                {
-                    UpdatePheromones(solution[i], solution[i + 1], depositAmount);
-                }
+                    UpdatePheromones(solution[i], solution[i + 1], depositAmount);            
             }
         }
     }
@@ -157,6 +163,7 @@ public class AntColony
     private void UpdatePheromones(int vert1, int vert2, double depositAmount)
     {
         var edgeIndex = pheromones[vert1].FindIndex(x => x.Item1 == vert2);
+
         if (edgeIndex != -1) 
         {
             var edge = pheromones[vert1][edgeIndex];
@@ -167,6 +174,7 @@ public class AntColony
         
 
         edgeIndex = pheromones[vert2].FindIndex(x => x.Item1 == vert1);
+
         if (edgeIndex != -1)
         {
             var edge = pheromones[vert2][edgeIndex];
@@ -184,6 +192,7 @@ public class AntColony
             throw new ArgumentException("Tour is null or too short to calculate length.");
 
         double length = 0;
+
         for (int i = 0; i < tour.Length - 1; i++)
         {
             int vert1 = tour[i];
@@ -202,7 +211,6 @@ public class AntColony
             }
             else
                 throw new InvalidOperationException($"No entries found for vertice {vert1} in distances.");
-            
         }
 
         if (tour.Length > 1 && distances.ContainsKey(tour.Last()) && distances[tour.Last()].Any(d => d.Item1 == tour[0]))
@@ -220,7 +228,6 @@ public class AntColony
 
         return length;
     }
-
 
 
 }
