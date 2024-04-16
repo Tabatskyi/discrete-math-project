@@ -125,7 +125,7 @@ class Program
         long memoryAfter = GC.GetTotalMemory(false);
         stopwatch.Stop();
 
-        long memoryUsed = memoryAfter - memoryBefore;
+        long memoryUsed = Math.Abs(memoryAfter - memoryBefore);
         double timeTaken = stopwatch.Elapsed.TotalMilliseconds;
 
         return $"{size},{density},{memoryUsed},{timeTaken:F3}";
