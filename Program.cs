@@ -48,10 +48,9 @@ class Program
 
                         totalMemoryUsed += memoryAfter - memoryBefore;
                         totalTimeTaken += stopwatch.Elapsed.TotalMilliseconds;
-
-
                     }
                     writer.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
+                    Console.WriteLine($"list: {size}, {density} done");
                 }
             });
         }
@@ -95,6 +94,7 @@ class Program
                         
                     }
                     matrixWriter.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
+                    Console.WriteLine($"matrix: {size}, {density} done");
                 }
 
             });
