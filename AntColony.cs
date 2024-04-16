@@ -21,7 +21,7 @@ public class AntColony
 
     public int[] bestTour;
 
-    public AntColony(int verts, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double initialPher)
+    public AntColony(int verts, int ants, Dictionary<int, List<Tuple<int, double>>> dists, double alpha, double beta, double evaporation, double Q)
     {
         matrix = false;
         numberOfVerts = verts;
@@ -32,7 +32,7 @@ public class AntColony
         pherMultiplier = alpha;
         distMultiplier = beta;
         evaporationRate = evaporation;
-        initialPheromone = initialPher;
+        initialPheromone = Q;
 
         listPheromones = [];
         bestTour = [];
@@ -152,7 +152,7 @@ public class AntColony
         double sum = 0;
         foreach (var vert in accessibleVerts)
         {
-            var distanceEntry = listDistances[currentVert].First(d => d.Item1 == vert.Item1);
+            var distanceEntry = listDistances[currentVert].FirstOrDefault(d => d.Item1 == vert.Item1);
 
             if (distanceEntry != null && distanceEntry.Item2 > 0)
             {
@@ -189,7 +189,7 @@ public class AntColony
     {
         if (matrix)
             for (int i = 0; i < numberOfVerts; i++)
-                for (int j = 0; i < numberOfVerts; j++)
+                for (int j = 0; j < numberOfVerts; j++)
                     matrixPheromones[i, j] *= 1 - evaporationRate;
         
         else
