@@ -13,20 +13,20 @@ class Program
         double[] densities = [0.5, 0.6, 0.7, 0.9, 1.0];
         int experimentCount = 20;
 
-        string filePath = $"results_list_graph.csv";
         string csvHeader = "Graph Size,Density,Average Memory Used (bytes),Average Time Taken (ms)";
 
-        using StreamWriter writer = new(filePath);
-        writer.WriteLine(csvHeader);
+        Task[] listTasks = new Task[densities.Length];
 
-        Task[] listTasks = new Task[sizes.Length];
-
-        for (int j = 0; j < sizes.Length; j++)
+        for (int j = 0; j < densities.Length; j++)
         {
-            int size = sizes[j];
+            double density = densities[j];
+            string filePath = $"results_list_graph_{density}.csv";
+
             listTasks[j] = Task.Run(() =>
             {
-                foreach (double density in densities)
+                using StreamWriter writer = new(filePath);
+                writer.WriteLine(csvHeader);
+                foreach (int size in sizes)
                 {
                     long totalMemoryUsed = 0;
                     double totalTimeTaken = 0;
@@ -48,8 +48,9 @@ class Program
 
                         totalMemoryUsed += memoryAfter - memoryBefore;
                         totalTimeTaken += stopwatch.Elapsed.TotalMilliseconds;
-                    }
 
+
+                    }
                     writer.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
                 }
             });
@@ -57,18 +58,18 @@ class Program
 
         Task.WaitAll(listTasks);
 
-        Task[] matrixTasks = new Task[sizes.Length];
+        Task[] matrixTasks = new Task[densities.Length];
 
-        string matrixFilePath = $"results_matrix_graph.csv";
-        using StreamWriter matrixWriter = new(matrixFilePath);
-        matrixWriter.WriteLine(csvHeader);
-
-        for (int j = 0; j < sizes.Length; j++)
+        for (int j = 0; j < densities.Length; j++)
         {
-            int size = sizes[j];
+            double density = densities[j];
+            string matrixFilePath = $"results_matrix_graph_{density}.csv";
+            
             matrixTasks[j] = Task.Run(() =>
             {
-                foreach (double density in densities)
+                using StreamWriter matrixWriter = new(matrixFilePath);
+                matrixWriter.WriteLine(csvHeader);
+                foreach (int size in sizes)
                 {
                     long totalMemoryUsed = 0;
                     double totalTimeTaken = 0;
@@ -90,10 +91,12 @@ class Program
 
                         totalMemoryUsed += memoryAfter - memoryBefore;
                         totalTimeTaken += stopwatch.Elapsed.TotalMilliseconds;
-                    }
 
+                        
+                    }
                     matrixWriter.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
                 }
+
             });
         }
 
