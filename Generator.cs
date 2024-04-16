@@ -5,8 +5,8 @@ public class Generator(int vertices, double probability)
     private readonly Random rand = new();
     private readonly int n = vertices;
     private readonly double p = probability;
-    public Dictionary<int, List<Tuple<int, double>>>? graphList;
-    public double[,]? graphMatrix;
+    public Dictionary<int, List<Tuple<int, double>>> graphList;
+    public double[,] graphMatrix;
 
     public void GenerateGraph()
     {

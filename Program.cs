@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 
 namespace DiscreteMathProject;
 
@@ -6,9 +7,17 @@ class Program
 {
     public static void Main()
     {
+        Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-GB");
+
         int[] sizes = [20, 35, 50, 75, 100, 111, 125, 150, 175, 200];
         double[] densities = [0.5, 0.6, 0.7, 0.9, 1.0];
         int experimentCount = 20;
+
+        string filePath = $"results_list_graph.csv";
+        string csvHeader = "Graph Size,Density,Average Memory Used (bytes),Average Time Taken (ms)";
+
+        using StreamWriter writer = new(filePath);
+        writer.WriteLine(csvHeader);
 
         Task[] listTasks = new Task[sizes.Length];
 
@@ -19,15 +28,15 @@ class Program
             {
                 foreach (double density in densities)
                 {
-                    var graphGenerator = new Generator(size, density);
-                    graphGenerator.GenerateGraph();
-                    var graphList = graphGenerator.graphList;
-
                     long totalMemoryUsed = 0;
                     double totalTimeTaken = 0;
 
                     for (int i = 0; i < experimentCount; i++)
                     {
+                        var graphGenerator = new Generator(size, density);
+                        graphGenerator.GenerateGraph();
+                        var graphList = graphGenerator.graphList;
+
                         Stopwatch stopwatch = Stopwatch.StartNew();
                         long memoryBefore = GC.GetTotalMemory(true);
 
@@ -41,10 +50,7 @@ class Program
                         totalTimeTaken += stopwatch.Elapsed.TotalMilliseconds;
                     }
 
-                    Console.WriteLine($"Graph size: {size}, Density: {density}");
-                    Console.WriteLine($"Average Memory Used: {totalMemoryUsed / experimentCount} bytes");
-                    Console.WriteLine($"Average Time Taken: {totalTimeTaken / experimentCount} ms");
-                    Console.WriteLine();
+                    writer.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
                 }
             });
         }
@@ -53,6 +59,10 @@ class Program
 
         Task[] matrixTasks = new Task[sizes.Length];
 
+        string matrixFilePath = $"results_matrix_graph.csv";
+        using StreamWriter matrixWriter = new(matrixFilePath);
+        matrixWriter.WriteLine(csvHeader);
+
         for (int j = 0; j < sizes.Length; j++)
         {
             int size = sizes[j];
@@ -60,15 +70,15 @@ class Program
             {
                 foreach (double density in densities)
                 {
-                    var graphGenerator = new Generator(size, density);
-                    graphGenerator.GenerateGraph();
-                    var graphMatrix = graphGenerator.graphMatrix;
-
                     long totalMemoryUsed = 0;
                     double totalTimeTaken = 0;
 
                     for (int i = 0; i < experimentCount; i++)
                     {
+                        var graphGenerator = new Generator(size, density);
+                        graphGenerator.GenerateGraph();
+                        var graphMatrix = graphGenerator.graphMatrix;
+
                         Stopwatch stopwatch = Stopwatch.StartNew();
                         long memoryBefore = GC.GetTotalMemory(true);
 
@@ -82,10 +92,7 @@ class Program
                         totalTimeTaken += stopwatch.Elapsed.TotalMilliseconds;
                     }
 
-                    Console.WriteLine($"Graph size: {size}, Density: {density}");
-                    Console.WriteLine($"Average Memory Used: {totalMemoryUsed / experimentCount} bytes");
-                    Console.WriteLine($"Average Time Taken: {totalTimeTaken / experimentCount} ms");
-                    Console.WriteLine();
+                    matrixWriter.WriteLine($"{size},{density},{totalMemoryUsed / experimentCount},{totalTimeTaken / experimentCount:F3}");
                 }
             });
         }
