@@ -40,7 +40,7 @@ public class AntColony
         InitializePheromones();
     }
 
-    public AntColony(int verts, int ants, double[,] dists, double alpha, double beta, double evaporation, double initialPher)
+    public AntColony(int verts, int ants, double[,] dists, double alpha, double beta, double evaporation, double Q)
     {
         matrix = true;
         numberOfVerts = verts;
@@ -51,7 +51,7 @@ public class AntColony
         pherMultiplier = alpha;
         distMultiplier = beta;
         evaporationRate = evaporation;
-        initialPheromone = initialPher;
+        initialPheromone = Q;
 
         matrixPheromones = new double[numberOfVerts, numberOfVerts];
         bestTour = [];
