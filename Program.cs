@@ -11,7 +11,7 @@ class Program
 
         int[] sizes = [20, 35, 50, 75, 100, 111, 125, 150, 175, 200];
         double[] densities = [0.5, 0.6, 0.7, 0.9, 1.0];
-        int experimentCount = 2;
+        int experimentCount = 20;
    
         string csvHeader = "Graph Size,Density,Average Tour Lenght,Average Memory Used (bytes),Average Time Taken (ms)";
 
