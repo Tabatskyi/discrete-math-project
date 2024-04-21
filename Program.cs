@@ -7,11 +7,13 @@ class Program
 {
     public static void Main()
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-GB");
 
         int[] sizes = [20, 35, 50, 75, 100, 111, 125, 150, 175, 200];
         double[] densities = [0.5, 0.6, 0.7, 0.9, 1.0];
-        int experimentCount = 20;
+        int experimentCount = 2;
    
         string csvHeader = "Graph Size,Density,Average Tour Lenght,Average Memory Used (bytes),Average Time Taken (ms)";
 
@@ -63,7 +65,7 @@ class Program
                             matrixResults[(size, density)] = (sumMem + memoryUsed, sumTime + timeTaken, sumLenght + lenght, count + 1);
                         }
 
-                        Console.WriteLine($"Matrix graph: Size {size}, Density {density}.");
+                    Console.WriteLine($"Matrix graph: Size {size}, Density {density}.");
 
                     }));
                 }
@@ -77,7 +79,7 @@ class Program
             foreach (var ((size, d), (memSum, timeSum, lenghtSum, count)) in listResults)
             {
                 if (d == density)  
-                    listWriter.WriteLine($"{size},{density},{lenghtSum / count},{memSum / count},{timeSum / count:F3}");
+                    listWriter.WriteLine($"{size},{density},{lenghtSum / count:F4},{memSum / count},{timeSum / count:F3}");
             }
             
 
@@ -93,6 +95,11 @@ class Program
             listResults.Clear();
             matrixResults.Clear();
         }
+
+        stopwatch.Stop();
+
+        Console.WriteLine($"Total elapsed time: {stopwatch.Elapsed}.\nPress any key to exit.");
+        Console.ReadKey();
 
     }
 
