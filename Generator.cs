@@ -1,33 +1,48 @@
 ﻿namespace DiscreteMathProject;
 
-public class Generator(int vertices, double probability)
+public class Generator
 {
     private readonly Random rand = new();
-    private readonly int n = vertices;
-    private readonly double p = probability;
+    private readonly int n;
+    private readonly double p;
     public Dictionary<int, List<Tuple<int, double>>> graphList;
     public double[,] graphMatrix;
 
+    public Generator(int vertices, double probability)
+    {
+        n = vertices;
+        p = probability;
+        graphMatrix = new double[n, n];
+        graphList = [];
+    }
+
     public void GenerateGraph()
     {
-        graphList = [];
-
+        
         for (int i = 0; i < n; i++)
         {
-            graphList[i] = []; 
             for (int j = 0; j < n; j++)
             {
                 if (i != j && rand.NextDouble() <= p)
                 {
-                    double weight = (double)Math.Ceiling((decimal)((i + j).GetHashCode() << 6)) / 33;
-                    graphList[i].Add(new Tuple<int, double>(j, weight));
+                    double weight = Math.Round(1.0 + rand.NextDouble() * 9.0, 2);
+                    graphMatrix[i, j] = weight;
                 }
+                else
+                    graphMatrix[i, j] = 0; 
+                
             }
         }
 
-        graphMatrix = new double[n, n];
-        foreach (var kvp in graphList)
-            foreach (var edge in kvp.Value)
-                graphMatrix[kvp.Key, edge.Item1] = edge.Item2;
+        for (int i = 0; i < n; i++)
+        {
+            graphList[i] = [];
+            for (int j = 0; j < n; j++)
+                if (graphMatrix[i, j] != 0)
+                    graphList[i].Add(new Tuple<int, double>(j, graphMatrix[i, j]));
+                
+            
+        }
     }
 }
+

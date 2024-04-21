@@ -203,7 +203,6 @@ public class AntColony
     }
 
 
-
     public void RunOptimization(int iterations)
     {
         for (int i = 0; i < iterations; i++)
@@ -230,7 +229,7 @@ public class AntColony
                 double depositAmount = 1000.0 / tourLength;
 
                 for (int j = 0; j < solution.Length - 1; j++)
-                    UpdatePheromones(solution[j], solution[j + 1], depositAmount);            
+                    UpdatePheromones(solution[j], solution[j + 1], depositAmount);
             }
         }
     }
@@ -264,8 +263,7 @@ public class AntColony
     }
 
 
-
-    private double CalculateTourLength(int[] tour)
+    public double CalculateTourLength(int[] tour)
     {
         if (tour == null || tour.Length < 2)
             throw new Exception("Tour is null or too short to calculate length.");
@@ -298,7 +296,6 @@ public class AntColony
 
         return length;
     }
-
 
 }
 
