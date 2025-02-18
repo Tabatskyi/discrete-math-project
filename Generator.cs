@@ -30,7 +30,6 @@ public class Generator
                 }
                 else
                     graphMatrix[i, j] = 0; 
-                
             }
         }
 
@@ -39,10 +38,7 @@ public class Generator
             graphList[i] = [];
             for (int j = 0; j < n; j++)
                 if (graphMatrix[i, j] != 0)
-                    graphList[i].Add(new Tuple<int, double>(j, graphMatrix[i, j]));
-                
-            
+                    graphList[i].Add(new Tuple<int, double>(j, graphMatrix[i, j]));            
         }
     }
 }
-
