@@ -1,0 +1,144 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[T2A,T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[ukrainian]{babel}
+\usepackage{pgfplots}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{hyperref}
+
+\pgfplotsset{width=9cm,compat=1.9}
+\urlstyle{colorlinks=true,linkcolor=blue,filecolor=magenta,urlcolor=cyan}
+
+\title{Дослідження та аналіз алгоритму «Ant Colony Optimisation», для розв'язання «Задачі комівояжера»}
+\author{Марк Табацький}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+Ще з прадавніх часів, однією з найбільш складних задач було заощадження часу, особливо коли від цього залежали прибутки. Так і з'явилася «Задача комівояжера». 
+Задача полягає у знаходженні такого маршруту через всі досяжні вершини графу (міста), щоб час або вартість були якомога найменші. 
+
+Щоб її розв'язати існує багато алгоритмів, наприклад простий для реалізації, але не для виконання, повний лексичний перебір, так і навпаки, 
+простіші для виконання, але складніші для реалізації, жадібні алгоритми та різні еврестичні техніки. 
+
+Отже я обрав саме «Ant Colony Optimisation» бо це найновіший, і один з найцікавіших алгоритмів вирішення даної задачі. 
+Алгоритм так називається, бо його суть роботи схожа з тим, як працюють мурахи. 
+
+На вхід алгоритм приймає граф, представлений матрицею або списком суміжності. Для найбільшої ефективності, зазвичай використовують матрицю, 
+бо вона забезпечує швидкий доступ до інформації про наявність зв'язку та вагу ребра. А на вихід віддає послідовний список вершин (маршрут). 
+
+Оцінка просторової складності залежить від представлення графу – так, для матриці складність буде $O(2N^2)$, 
+а для списку суміжності $O(N)$, де $N$ це кількість вершин графу.
+
+Часова складність: $O(I \times A \times N^2)$ для матриці і $O(I \times A \times N \times p)$, 
+де $I$ – кількість ітерацій, $A$ – кількість мурах, $N$ – кількість вершин, $p$ – щільність графу.
+
+\begin{algorithm}
+    \caption{Ant Colony Optimization}
+    \begin{algorithmic}
+    \State \textbf{Input:} number of vertices, number of ants, distances, pheromone influence, distance influence, evaporation rate, initial pheromone value
+    \State \textbf{Output:} Best path and its length
+    
+    \Procedure{AntColonyOptimization}{}
+        \State Initialize pheromones on all paths
+        \State bestLength $\gets \infty$
+        \State bestPath $\gets$ empty
+        \For{each iteration}
+            \For{each ant}
+                \State path $\gets$ GeneratePath(starting from random vertex)
+                \If{length(path) < bestLength}
+                    \State bestPath $\gets$ path
+                    \State bestLength $\gets$ length(path)
+                \EndIf
+            \EndFor
+            \State UpdatePheromones()
+            \State EvaporatePheromones()
+        \EndFor
+    \EndProcedure
+    
+    \Function{GenerateSolution}{start vertex}
+        \State path $\gets$ start vertex
+        \State visited $\gets$ set containing start vertex
+        \While{not all vertices are visited}
+            \State nextVertex $\gets$ select next vertex based on pheromone and distance
+            \State add nextVertex to path
+            \State add nextVertex to visited
+        \EndWhile
+        \State \Return path
+    \EndFunction
+    
+    \Procedure{UpdatePheromones}{}
+        \For{each path generated in this iteration}
+            \For{each edge in path}
+                \State increase pheromone on edge based on quality of path
+            \EndFor
+        \EndFor
+    \EndProcedure
+    
+    \Procedure{EvaporatePheromones}{}
+        \For{each pheromone on every edge}
+            \State reduce pheromone by evaporation rate
+        \EndFor
+    \EndProcedure
+    
+    \end{algorithmic}
+\end{algorithm}
+
+Для реалізіції алгоритму я вибрав C\textbf{\#} через свою особисту любов до цієї мови.
+Реалізація алгоритму може працювати як з матрицею, так і зі списком. 
+При ініціалізації класу AntColony, автоматично обирається потрібний конструктор та ставиться прапорець на те, чи це список, чи матриця. 
+Для списку відвіданих вершин використовується \textbf{HashSet} для швидшої роботи алгоритму. 
+Для пошуку відповідних вершин у списках використовується розширення інтерфейсу \textbf{IEnumerable} \textit{FirstOrDefault} для зручнішого знаходження співпадінь (Боже, бережи Microsoft). 
+Також кожна ітерація експерименту виконується на окремому потоці процесора. Це зроблено для кращої швидкості його виконання\\
+Посилання на репозиторій з вихідним кодом:\\
+\url{https://github.com/Tabatskyi/discrete-math-project}\\
+
+Для експерименту було обрано такі значення:\\ 
+Щільність: 0.5; 0.6; 0.7; 0.9; 1.\\
+Розміри: 20, 35, 50, 75, 100, 111, 125, 150, 175, 200.
+
+Нижче представлений графік для трьох щільностей.
+ 
+\begin{tikzpicture}
+    \begin{axis} [title={Щільність: 0.5, 0.6 та 0.7}, xlabel={Розмір графу (вершини)}, ylabel={Середній витрачений час (ms)}, legend pos=north west]
+    \addplot table [color=blue, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_list_graph_0.5.csv};
+    \addlegendentry{Щ-ть 0.5 Список}
+    \addplot table [color=red, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_matrix_graph_0.5.csv};
+    \addlegendentry{Щ-ть 0.5 Матриця}
+    \addplot table [color=yellow, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_list_graph_0.6.csv};
+    \addlegendentry{Щ-ть 0.6 Список}
+    \addplot table [color=red, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_matrix_graph_0.6.csv};
+    \addlegendentry{Щ-ть 0.6 Матриця}
+    \addplot table [color=yellow, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_list_graph_0.7.csv};
+    \addlegendentry{Щ-ть 0.7 Список}
+    \addplot table [color=orange, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_matrix_graph_0.7.csv};
+    \addlegendentry{Щ-ть 0.7 Матриця}
+    \end{axis}
+\end{tikzpicture}\\
+З нього можна побачити колосальну різницю в швидкості між представленнями графів, та експоненційне зростання часу від щільності для списку, при тому що час для матриці росте набагато повільніше та лінійніше.\\
+
+Тут на графіку результати для повного та майже повного (щільність 0.9) графа.
+
+\begin{tikzpicture}
+    \begin{axis} [title={Щільність: 0.9 та 1}, xlabel={Graph Size (verts)}, ylabel={Average Time Taken (ms)}, legend pos=north west]
+    \addplot table [color=blue, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_list_graph_0.9.csv};
+    \addlegendentry{Щ-ть 0.9 Список}
+    \addplot table [color=red, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_matrix_graph_0.9.csv};
+    \addlegendentry{Щ-ть 0.9 Матриця}
+    \addplot table [color=blue, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_list_graph_1.csv};
+    \addlegendentry{Щ-ть 1 Список}
+    \addplot table [color=red, x=Graph Size, y={Average Time Taken (ms)}, col sep=comma] {results_matrix_graph_1.csv};
+    \addlegendentry{Щ-ть 1 Матриця}
+    \end{axis}
+\end{tikzpicture}
+
+Можна побачити що швидкість між 175 вершин та 200 майже не змінилася для майже повного графа, а для повного навіть впала, мабуть, процесор розігнався під кінець.
+Головне що для матричного представлення швидкість все ще доволі низька та не така стрімка, як для списку.
+
+Отже, можна констатувати, що матричне представлення набагато краще відповідає вимогам алгоритму «Ant Colony Optimisation» аніж списки суміжності. 
+Тому, що на виконання витрачається набагато менше часу, та і швидкість зростання цього самого часу набагато менша за списки суміжності. 
+Отже можна виконувати обрахунки на більших графах без такого суттєвого зростання часу виконання алгоритму.
+
+\end{document}
