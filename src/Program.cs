@@ -8,14 +8,14 @@ class Program
 {
     private static readonly int[] sizes = [20, 35, 50, 75, 100, 111, 125, 150, 175, 200];
     private static readonly double[] densities = [0.5, 0.6, 0.7, 0.9, 1.0];
-    private static readonly int experimentCount = 2;
+    private static readonly int experimentCount = 10;
     private static readonly int optimisationIterations = 10;
 
     public static void Main()
     {
         Stopwatch stopwatch = new();
         stopwatch.Start();
-        Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-GB");
+        Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-GB"); // ensure '.' as decimal separator
 
         string csvHeader = "Graph Size,Density,Average Tour Lenght,Average Memory Used (bytes),Average Time Taken (ms)";
 
