@@ -1,0 +1,74 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ManagedCuda-12" Version="12.8.60" />
+  </ItemGroup>
+
+  <!-- CUDA build configuration -->
+  <PropertyGroup>
+    <CudaNvccExe>$(CUDA_PATH)\bin\nvcc.exe</CudaNvccExe>
+    <CudaArch>compute_60</CudaArch>
+    <CudaCodeGen>-gencode=arch=compute_60,code=compute_60 -gencode=arch=compute_70,code=compute_70 -gencode=arch=compute_75,code=compute_75 -gencode=arch=compute_80,code=compute_80 -gencode=arch=compute_86,code=compute_86 -gencode=arch=compute_89,code=compute_89</CudaCodeGen>
+    <BuildCudaKernels>true</BuildCudaKernels>
+    <BuildCudaCubins>true</BuildCudaCubins>
+    <CudaSmList>80;86;89</CudaSmList>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CudaSource Include="CudaKernel.cu" />
+    <CudaPtx Include="@(CudaSource-&gt;'$(IntermediateOutputPath)%(Filename).ptx')" />
+  </ItemGroup>
+
+  <Target Name="BuildCuda" BeforeTargets="BeforeBuild"
+          Inputs="@(CudaSource)"
+          Outputs="@(CudaPtx)"
+          Condition="'$(BuildCudaKernels)' == 'true' and Exists('$(CudaNvccExe)')">
+    <Message Text="Compiling CUDA: %(CudaSource.Identity) -&gt; $(IntermediateOutputPath)%(CudaSource.Filename).ptx" Importance="High" />
+    <Exec ConsoleToMSBuild="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(CudaNvccExe)&quot; -ptx -arch=$(CudaArch) &quot;%(CudaSource.Identity)&quot; -o &quot;$(IntermediateOutputPath)%(CudaSource.Filename).ptx&quot; $(CudaCodeGen) -Wno-deprecated-gpu-targets" />
+  </Target>
+
+  <Target Name="BuildCudaCubin" BeforeTargets="BeforeBuild"
+          Condition="'$(BuildCudaCubins)' == 'true' and Exists('$(CudaNvccExe)')">
+    <ItemGroup>
+      <SmArch Include="$(CudaSmList)" />
+    </ItemGroup>
+    <Message Text="Compiling CUDA CUBINs for SMs: $(CudaSmList)" Importance="High" />
+    <Exec ConsoleToMSBuild="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          ContinueOnError="true"
+          Command="&quot;$(CudaNvccExe)&quot; -cubin -arch=sm_%(SmArch.Identity) &quot;CudaKernel.cu&quot; -o &quot;$(IntermediateOutputPath)CudaKernel.sm%(SmArch.Identity).cubin&quot; -Wno-deprecated-gpu-targets" />
+  </Target>
+
+  <Target Name="WarnCudaMissing" BeforeTargets="BeforeBuild"
+          Condition="('$(BuildCudaKernels)' == 'true' or '$(BuildCudaCubins)' == 'true') and !Exists('$(CudaNvccExe)')">
+    <Message Text="CUDA nvcc not found at '$(CudaNvccExe)'. Skipping CUDA compilation. Set CUDA_PATH or set BuildCudaKernels/BuildCudaCubins=false." Importance="High" />
+  </Target>
+
+  <Target Name="CopyCudaPtx" AfterTargets="Build" Condition="'$(BuildCudaKernels)' == 'true'">
+    <Copy SourceFiles="@(CudaPtx)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('%(CudaPtx.Identity)')" />
+  </Target>
+
+  <Target Name="CopyCudaCubin" AfterTargets="Build" Condition="'$(BuildCudaCubins)' == 'true'">
+    <ItemGroup>
+      <SmArch Include="$(CudaSmList)" />
+      <GeneratedCubin Include="$(IntermediateOutputPath)CudaKernel.sm%(SmArch.Identity).cubin" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GeneratedCubin)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('%(GeneratedCubin.Identity)')" />
+  </Target>
+
+  <ItemGroup Condition="'$(BuildCudaKernels)' != 'true'">
+    <None Include="CudaKernel.ptx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

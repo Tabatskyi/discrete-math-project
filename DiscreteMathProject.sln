@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscreteMathProject", "DiscreteMathProject.csproj", "{016C86F6-48C2-4A2C-8CF8-86984A2D9F32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscreteMathProject", "src\DiscreteMathProject.csproj", "{72B495F2-D3D9-CCE2-CFF7-B318D7C70CF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{016C86F6-48C2-4A2C-8CF8-86984A2D9F32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{016C86F6-48C2-4A2C-8CF8-86984A2D9F32}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{016C86F6-48C2-4A2C-8CF8-86984A2D9F32}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{016C86F6-48C2-4A2C-8CF8-86984A2D9F32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72B495F2-D3D9-CCE2-CFF7-B318D7C70CF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72B495F2-D3D9-CCE2-CFF7-B318D7C70CF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72B495F2-D3D9-CCE2-CFF7-B318D7C70CF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72B495F2-D3D9-CCE2-CFF7-B318D7C70CF3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
