@@ -8,17 +8,45 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="CudaKernel.ptx" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="CudaKernel.ptx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="ManagedCuda-12" Version="12.8.60" />
+  </ItemGroup>
+
+  <!-- CUDA build configuration -->
+  <PropertyGroup>
+    <CudaNvccExe>$(CUDA_PATH)\bin\nvcc.exe</CudaNvccExe>
+    <CudaArch>compute_60</CudaArch>
+    <CudaCodeGen></CudaCodeGen>
+    <BuildCudaKernels>true</BuildCudaKernels>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CudaSource Include="CudaKernel.cu" />
+    <CudaPtx Include="@(CudaSource-&gt;'$(IntermediateOutputPath)%(Filename).ptx')" />
+  </ItemGroup>
+
+  <Target Name="BuildCuda" BeforeTargets="BeforeBuild"
+          Inputs="@(CudaSource)"
+          Outputs="@(CudaPtx)"
+          Condition="'$(BuildCudaKernels)' == 'true' and Exists('$(CudaNvccExe)')">
+    <Message Text="Compiling CUDA: %(CudaSource.Identity) -&gt; $(IntermediateOutputPath)%(CudaSource.Filename).ptx" Importance="High" />
+    <Exec ConsoleToMSBuild="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(CudaNvccExe)&quot; -ptx -arch=$(CudaArch) &quot;%(CudaSource.Identity)&quot; -o &quot;$(IntermediateOutputPath)%(CudaSource.Filename).ptx&quot; $(CudaCodeGen) -Wno-deprecated-gpu-targets" />
+  </Target>
+
+  <Target Name="WarnCudaMissing" BeforeTargets="BeforeBuild"
+          Condition="'$(BuildCudaKernels)' == 'true' and !Exists('$(CudaNvccExe)')">
+    <Message Text="CUDA nvcc not found at '$(CudaNvccExe)'. Skipping CUDA compilation. Set CUDA_PATH or set BuildCudaKernels=false." Importance="High" />
+  </Target>
+
+  <Target Name="CopyCudaPtx" AfterTargets="Build" Condition="'$(BuildCudaKernels)' == 'true'">
+    <Copy SourceFiles="@(CudaPtx)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('%(CudaPtx.Identity)')" />
+  </Target>
+
+  <ItemGroup Condition="'$(BuildCudaKernels)' != 'true'">
+    <None Include="CudaKernel.ptx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
