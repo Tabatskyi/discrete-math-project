@@ -81,18 +81,15 @@ extern "C" __global__ void UpdatePheromones(double* pheromones, int* tours, int 
     int cityIndex = blockIdx.x * blockDim.x + threadIdx.x;
     if (cityIndex < numCities)
     {
-		for (int i = 0; i < numCities; i++)
-		{
-			for (int j = 0; j < numAnts; j++)
-			{
-				int city1 = tours[j * numCities + cityIndex];
-				int city2 = tours[j * numCities + (cityIndex + 1) % numCities];
-				if (city1 != -1 && city2 != -1)
-				{
-					atomicAddDouble(&pheromones[city1 * numCities + city2], 1.0);
-					atomicAddDouble(&pheromones[city2 * numCities + city1], 1.0);
-				}
-			}
-		}
+        for (int j = 0; j < numAnts; j++)
+        {
+            int city1 = tours[j * numCities + cityIndex];
+            int city2 = tours[j * numCities + (cityIndex + 1) % numCities];
+            if (city1 != -1 && city2 != -1)
+            {
+                atomicAddDouble(&pheromones[city1 * numCities + city2], 1.0);
+                atomicAddDouble(&pheromones[city2 * numCities + city1], 1.0);
+            }
+        }
     }
 }

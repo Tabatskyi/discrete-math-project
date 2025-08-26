@@ -19,7 +19,6 @@ class Program
 
         string csvHeader = "Graph Size,Density,Average Tour Lenght,Average Memory Used (bytes),Average Time Taken (ms)";
 
-        Dictionary<(int, double), (long memorySum, double timeSum, double lenghtSum, int count)> listResults = [];
         Dictionary<(int, double), (long memorySum, double timeSum, double lenghtSum, int count)> matrixResults = [];
 
         foreach (double density in densities)
@@ -42,7 +41,7 @@ class Program
                             if (!matrixResults.ContainsKey((size, density)))
                                 matrixResults[(size, density)] = (0, 0, 0, 0);
 
-                            var (sumMem, sumTime,sumLenght, count) = matrixResults[(size, density)];
+                            var (sumMem, sumTime, sumLenght, count) = matrixResults[(size, density)];
                             matrixResults[(size, density)] = (sumMem + memoryUsed, sumTime + timeTaken, sumLenght + lenght, count + 1);
                         }
 
@@ -53,21 +52,13 @@ class Program
 
             Task.WaitAll([.. tasks]);
 
-            using var listWriter = new StreamWriter($"results_list_graph_{density}.csv");
-            listWriter.WriteLine(csvHeader);
-
-            foreach (var ((size, d), (memSum, timeSum, lenghtSum, count)) in listResults)
-                if (d == density)  
-                    listWriter.WriteLine($"{size},{density},{lenghtSum / count:F4},{memSum / count},{timeSum / count:F3}");
-            
-            using var matrixWriter = new StreamWriter($"results_matrix_graph_{density}.csv") ;
+            using var matrixWriter = new StreamWriter($"results_matrix_graph_{density}.csv");
             matrixWriter.WriteLine(csvHeader);
 
             foreach (var ((size, d), (memSum, timeSum, lenghtSum, count)) in matrixResults)
                 if (d == density)
                     matrixWriter.WriteLine($"{size},{density},{lenghtSum / count},{memSum / count},{timeSum / count:F3}");
-            
-            listResults.Clear();
+
             matrixResults.Clear();
         }
 
@@ -82,9 +73,6 @@ class Program
         using var context = new CudaContext();
 
         int antsCount = 60;
-        double alphaValue = 1;
-        double betaValue = 5;
-        double evaporationValue = 0.5;
         double QValue = 0.1;
 
         var graphGenerator = new Generator(size, density);
@@ -93,10 +81,8 @@ class Program
         Stopwatch stopwatch = Stopwatch.StartNew();
         long memoryBefore = GC.GetTotalMemory(true);
 
-        AntColony antColony;
-        
         var graphMatrix = graphGenerator.graphMatrix;
-        antColony = new AntColony(size, antsCount, graphMatrix, alphaValue, betaValue, evaporationValue, QValue, context);
+        var antColony = new AntColony(size, antsCount, graphMatrix, QValue, context);
 
         antColony.RunOptimization(optimisationIterations);
 

@@ -8,28 +8,22 @@ public class AntColony
     private readonly double[,] distances;
     private readonly double[,] pheromones;
 
-    private readonly Random rand = new();
-
     private readonly int numberOfVerts;
     private readonly int numberOfAnts;
 
-    private readonly double pherMultiplier;
-    private readonly double distMultiplier;
     private readonly double initialPheromone;
 
     private readonly CudaContext context;
 
     public int[] bestTour;
 
-    public AntColony(int verts, int ants, double[,] dists, double alpha, double beta, double evaporation, double Q, CudaContext context)
+    public AntColony(int verts, int ants, double[,] dists, double Q, CudaContext context)
     {
         numberOfVerts = verts;
         numberOfAnts = ants;
 
         distances = dists;
 
-        pherMultiplier = alpha;
-        distMultiplier = beta;
         initialPheromone = Q;
 
         this.context = context;
@@ -38,7 +32,6 @@ public class AntColony
         bestTour = new int[numberOfAnts * numberOfVerts];
 
         InitializePheromones();
-        GenerateSolution();
     }
 
     private void InitializePheromones()
@@ -46,63 +39,6 @@ public class AntColony
         for (int i = 0; i < numberOfVerts; i++)
             for (int j = 0; j < numberOfVerts; j++)
                 pheromones[i, j] = initialPheromone;
-       
-    }
-
-    private int[] GenerateSolution()
-    {
-        List<int> tour = [];
-        int startVert = rand.Next(numberOfVerts);
-        tour.Add(startVert);
-        HashSet<int> visited = [startVert];
-        int currentVert = startVert;
-
-        while (tour.Count < numberOfVerts)
-        {
-            int nextVert = ChooseNextVert(currentVert, visited);
-            if (nextVert == -1)
-                break;
-
-            tour.Add(nextVert);
-            visited.Add(nextVert);
-            currentVert = nextVert;
-        }
-
-        return [.. tour];
-    }
-
-    private int ChooseNextVert(int currentVert, HashSet<int> visited)
-    {
-        List<int> accessibleVerts = [];
-        double sum = 0;
-
-        for (int i = 0; i < numberOfVerts; i++)
-        {
-            if (!visited.Contains(i) && distances[currentVert, i] > 0)
-            {
-                double pheromone = pheromones[currentVert, i];
-                double distance = distances[currentVert, i];
-                sum += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
-                accessibleVerts.Add(i);
-            }
-        }
-
-        if (sum <= 0)
-            return -1;
-
-        double randomPoint = rand.NextDouble() * sum;
-        double cumulativeProbability = 0;
-
-        foreach (int vert in accessibleVerts)
-        {
-            double pheromone = pheromones[currentVert, vert];
-            double distance = distances[currentVert, vert];
-            cumulativeProbability += Math.Pow(pheromone, pherMultiplier) * Math.Pow(1.0 / distance, distMultiplier);
-            if (cumulativeProbability >= randomPoint)
-                return vert;
-        }
-
-        return -1;
     }
 
     public void RunOptimization(int iterations)
