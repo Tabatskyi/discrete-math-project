@@ -54,10 +54,7 @@ public class AntColony
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(iterations);
 
-        const string modulePath = "CudaKernel.ptx";
-        if (!File.Exists(modulePath))
-            throw new FileNotFoundException($"PTX module not found at '{modulePath}'. Compile CudaKernel.cu to PTX and place it next to the executable.", modulePath);
-
+        string modulePath = ResolveBestModule();
         var module = context.LoadModule(modulePath);
 
         CudaDeviceVariable<double> d_graph = new(distances.Length);
@@ -110,6 +107,26 @@ public class AntColony
             d_tours.Dispose();
             d_pheromones.Dispose();
         }
+    }
+
+    private string ResolveBestModule()
+    {
+        try
+        {
+            var info = context.GetDeviceInfo();
+            int sm = info.ComputeCapability.Major * 10 + info.ComputeCapability.Minor;
+            string cubin = $"CudaKernel.sm{sm}.cubin";
+            if (File.Exists(cubin))
+                return cubin;
+        }
+        catch
+        {
+            const string ptx = "CudaKernel.ptx";
+            if (File.Exists(ptx))
+                return ptx;
+        }
+
+        throw new FileNotFoundException("No suitable CUDA module found. Expected CudaKernel.smXY.cubin or CudaKernel.ptx next to the executable.");
     }
 
     private void SelectBestTourFromBuffer()
